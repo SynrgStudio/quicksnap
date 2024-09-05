@@ -22,7 +22,7 @@ class QuickVertexSnapOperator(bpy.types.Operator):
     bl_label = "QuickSnap Tool"
     bl_options = { 'REGISTER', 'UNDO'}
     bl_description = "Quickly snap selection from/to a selected vertex, curve point, object origin, edge midpoint, face" \
-                     " center.\nUse the same keymap to open the tool PIE menu."
+                     " center.\nUse the same keymap to open the tool PIE menu.\n Duplicate objects added"
 
     def initialize(self, context):
         self.icons = {}
@@ -649,6 +649,22 @@ class QuickVertexSnapOperator(bpy.types.Operator):
             self.update(context, region)
             self.apply(context, region)
 
+
+        elif event.type == 'D' and event.value == 'PRESS':
+            bpy.ops.object.mode_set(mode='OBJECT') # Change to Object Mode
+            bpy.ops.object.duplicate() # Duplicate Object
+            bpy.context.view_layer.update() # Force context update
+            bpy.ops.object.select_all(action='DESELECT') # Deselect everything
+            # Select duplicate
+            for obj in bpy.context.view_layer.objects:
+                if obj != self.target_object and obj.select_get():
+                    bpy.context.view_layer.objects.active = obj  # Make duplicate active
+                    bpy.ops.object.select_all(action='DESELECT')  # Deselect everything
+                    obj.select_set(True)  # Select duplicate
+            
+            bpy.context.view_layer.update() # Force context update
+
+
         elif event_type == 'W':
             self.settings.display_target_wireframe = not self.settings.display_target_wireframe
             self.set_object_display(self.target_object, self.hover_object, self.target_object_is_root, force=True)
@@ -736,7 +752,8 @@ class QuickVertexSnapOperator(bpy.types.Operator):
         ignore_modifiers_msg = ""
         axis_msg = ""
         snapping_msg = f"Use (Shift+)X/Y/Z to constraint to the world/local axis or plane. Use O to snap to object " \
-                       f"origins. 1,2,3 to snap to verts, edge midpoints, face centers. Right Mouse Button/ESC to cancel the operation. "
+                       f"origins. 1,2,3 to snap to verts, edge midpoints, face centers. Right Mouse Button/ESC to cancel the operation. " \
+                       f"Use 'D' to duplicate selected objects"
 
         if len(self.snapping) > 0:
             if len(self.snapping) == 1:
@@ -1001,7 +1018,7 @@ class QuickVertexSnapPreference(bpy.types.AddonPreferences):
                                              control=quicksnap_keymap.ctrl,
                                              alt=quicksnap_keymap.alt,
                                              )
-
+        quicksnap_utils.insert_ui_hotkey(col, 'EVENT_D', "Duplicate selected objects")
         quicksnap_utils.insert_ui_hotkey(col, 'EVENT_X', "Constraint to X Axis")
         quicksnap_utils.insert_ui_hotkey(col, 'EVENT_X', "Constraint to X Plane", shift=True)
         quicksnap_utils.insert_ui_hotkey(col, 'EVENT_Y', "Constraint to Y Axis")
