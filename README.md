@@ -1,3 +1,16 @@
+This is as fork of the original Addon [Original addon] (https://github.com/JulienHeijmans/quicksnap/) witch wasn't updated in the last 6 months.
+
+Added the option to duplicate within the QuickSnap modal.
+
+## New Workflow to duplicate:
+* Ctrl+Shift+V (to activate QuickSnap)
+* D (to duplicate the selected models)
+* Snap the objects to the new position using all the functionality of the addon
+
+
+------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
 # QuickSnap
 QuickSnap is a Blender addon to quickly snap objects/vertices/points to object origins/vertices/points, similar to how vertex snap works in Maya/3Dsmax.
 
