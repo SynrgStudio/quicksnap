@@ -187,7 +187,7 @@ class AddonUpdaterInstallPopup(bpy.types.Operator):
             row.alignment='EXPAND'
             row.operator(
                 "wm.url_open", text="Read {} release notes".format(__name_addon_display__), icon='HELP',
-            ).url = "https://github.com/JulienHeijmans/quicksnap/releases"
+            ).url = "https://github.com/SynrgStudio/quicksnap/releases"
             row = col.row()
             row.alignment = 'CENTER'
             row.scale_y = 1.5
@@ -1120,7 +1120,7 @@ def update_settings_ui(self, context, element=None):
         col.operator(AddonUpdaterRestoreBackup.bl_idname, text=backup_text)
         col.operator(
             "wm.url_open", text="Read {} release notes".format(__name_addon_display__), icon='HELP',
-        ).url = "https://github.com/JulienHeijmans/quicksnap/releases"
+        ).url = "https://github.com/SynrgStudio/quicksnap/releases"
 
     row = box.row()
     row.scale_y = 0.7
@@ -1378,7 +1378,7 @@ def register(bl_info):
     updater.private_token = None  # "tokenstring"
 
     # Choose your own username, must match website (not needed for GitLab).
-    updater.user = "JulienHeijmans"
+    updater.user = "SynrgStudio"
 
     # Choose your own repository, must match git name for GitHUb and Bitbucket,
     # for GitLab use project ID (numbers only).
@@ -1387,7 +1387,7 @@ def register(bl_info):
     # updater.addon = # define at top of module, MUST be done first
 
     # Website for manual addon download, optional but recommended to set.
-    updater.website = "https://github.com/JulienHeijmans/quicksnap/"
+    updater.website = "https://github.com/SynrgStudio/quicksnap/"
 
     # Addon subfolder path.
     # "sample/path/to/addon"
