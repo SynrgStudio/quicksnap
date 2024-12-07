@@ -5,15 +5,15 @@ from . import addon_updater_ops
 
 bl_info = {
     "name": "QuickSnap",
-    "author": "Julien Heijmans",
+    "author": "SynrgStudio - Forked from Julien Heijmans",
     "blender": (4, 2, 0),
     'version': (1, 0, 0),
     "category": "3D View",
     "description": "Quickly snap objects/vertices/curve points - Duplicate objects and snap",
     "warning": "",
-    "doc_url": "https://github.com/JulienHeijmans/quicksnap",
-    "releases_url": "https://github.com/JulienHeijmans/quicksnap/releases",
-    "tracker_url": "https://github.com/JulienHeijmans/quicksnap/issues",
+    "doc_url": "https://github.com/SynrgStudio/quicksnap",
+    "releases_url": "https://github.com/SynrgStudio/quicksnap/releases",
+    "tracker_url": "https://github.com/SynrgStudio/quicksnap/issues",
 }
 
 

@@ -878,7 +878,7 @@ class QuickVertexSnapPreference(bpy.types.AddonPreferences):
             ("KEY", "Only in 'Snap to origins' mode (\"O\" key)", "", 1)
         ],
         default="ALWAYS", )
-    display_target_wireframe: bpy.props.BoolProperty(name="Display target object wireframe", default=True)
+    display_target_wireframe: bpy.props.BoolProperty(name="Display target object wireframe", default=False)
     highlight_target_vertex_edges: bpy.props.BoolProperty(name="Enable highlighting of target vertex edges*",
                                                           default=True)
     edge_highlight_width: bpy.props.IntProperty(name="Highlight Width", default=2, min=1, max=10)
