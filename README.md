@@ -1,5 +1,5 @@
 # QuickSnap
-This repo will be the new "maintained version of the addon as the original dev seems to have abandoned de project :D [Original Repo https://github.com/JulienHeijmans/quicksnap]
+This is a maintained fork of the QuickSnap addon for Blender.
 
 QuickSnap is a Blender addon to quickly snap objects/vertices/points to object origins/vertices/points, similar to how vertex snap works in Maya/3Dsmax.
 
