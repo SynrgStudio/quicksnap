@@ -502,6 +502,25 @@ class QuickVertexSnapOperator(bpy.types.Operator):
             self.terminate(context, revert=True)
             return {'CANCELLED'}
 
+        # Edge Cases: Custom Camera Navigation
+        preferences = get_addon_settings()
+        if (preferences.enable_camera_navigation and 
+            event.type == 'LEFTMOUSE' and 
+            event.value == 'PRESS' and 
+            not self.menu_open):
+            
+            modifier_pressed = False
+            if preferences.camera_nav_modifier == 'ALT' and event.alt:
+                modifier_pressed = True
+            elif preferences.camera_nav_modifier == 'CTRL' and event.ctrl:
+                modifier_pressed = True
+            elif preferences.camera_nav_modifier == 'SHIFT' and event.shift:
+                modifier_pressed = True
+                
+            if modifier_pressed:
+                # Let Blender handle the navigation, don't process snapping
+                return {'PASS_THROUGH'}
+
         elif event.type == 'LEFTMOUSE' and not self.menu_open:  # Confirm
             if event.value == 'PRESS':
                 self.clicktime = time.time()
@@ -980,6 +999,24 @@ class QuickVertexSnapPreference(bpy.types.AddonPreferences):
         ],
         default="FADE", )
 
+    # Edge Cases - Custom Camera Navigation
+    enable_camera_navigation: bpy.props.BoolProperty(
+        name="Allow Camera Navigation During Modal",
+        description="Enable camera movement while QuickSnap modal is active using custom modifier + LMB",
+        default=False,
+    )
+    
+    camera_nav_modifier: bpy.props.EnumProperty(
+        name="Camera Navigation Modifier",
+        description="Choose which modifier + Left Mouse Button to use for camera navigation",
+        items=[
+            ('ALT', "Alt + LMB", "Use Alt + Left Mouse for camera navigation"),
+            ('CTRL', "Ctrl + LMB", "Use Ctrl + Left Mouse for camera navigation"), 
+            ('SHIFT', "Shift + LMB", "Use Shift + Left Mouse for camera navigation")
+        ],
+        default='ALT',
+    )
+
     # addon updater preferences from `__init__`, be sure to copy all of them
     auto_check_update: bpy.props.BoolProperty(
         name="Auto-check for Update",
@@ -1084,6 +1121,23 @@ class QuickVertexSnapPreference(bpy.types.AddonPreferences):
         quicksnap_utils.insert_ui_hotkey(col, 'EVENT_M', "Enable/Disable 'Ignore Modifiers'")
         quicksnap_utils.insert_ui_hotkey(col, 'EVENT_ESC', "Cancel Snap")
         quicksnap_utils.insert_ui_hotkey(col, 'MOUSE_RMB', "Cancel Snap")
+
+        # Edge Cases Section
+        col.separator()
+        box_content = layout.box()
+        header = box_content.row(align=True)
+        header.label(text="Edge Cases", icon='SETTINGS')
+        col = box_content.column(align=True)
+        col.use_property_split = True
+        
+        # Camera Navigation Toggle
+        col.prop(self, "enable_camera_navigation")
+        if self.enable_camera_navigation:
+            col.prop(self, "camera_nav_modifier")
+            col.separator()
+            col.label(text="⚠️ This only works if you have the chosen", icon='INFO')
+            col.label(text="modifier + LMB configured for camera navigation", icon='BLANK1')
+            col.label(text="in your Blender keymap preferences.", icon='BLANK1')
 
         addon_updater_ops.update_settings_ui(self, context)
 

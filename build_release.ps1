@@ -282,8 +282,21 @@ function Invoke-GitCommitAndPush {
             return $false
         }
         
-        # Commit con mensaje descriptivo
-        $commitMessage = "Release v$Version"
+        # Solicitar mensaje de commit personalizado
+        Write-Host ""
+        Write-Host "  -> Mensaje del commit:" -ForegroundColor Cyan -NoNewline
+        Write-Host " (presiona Enter para usar mensaje por defecto)" -ForegroundColor Gray
+        $userMessage = Read-Host "    "
+        
+        # Usar mensaje por defecto si está vacío
+        if ([string]::IsNullOrWhiteSpace($userMessage)) {
+            $commitMessage = "Release v$Version"
+            Write-Host "  -> Usando mensaje por defecto: $commitMessage" -ForegroundColor Yellow
+        } else {
+            $commitMessage = $userMessage.Trim()
+            Write-Host "  -> Usando mensaje personalizado: $commitMessage" -ForegroundColor Green
+        }
+        
         git commit -m $commitMessage
         if ($LASTEXITCODE -eq 0) {
             Write-Host "  -> Commit creado: $commitMessage" -ForegroundColor Green
