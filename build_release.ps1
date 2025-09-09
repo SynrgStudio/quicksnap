@@ -1,6 +1,6 @@
 #!/usr/bin/env pwsh
 # ===========================================        if ($initContent -match "'version':\s*\((\d+),\s*(\d+),\s*(\d+)\)") {================================
-# DAMTools - Script de Release Automatizado
+# QUickSnap - Script de Release Automatizado
 # ============================================================================
 # Este script automatiza el proceso completo de release del addon:
 # 1. Construye la documentación (mkdocs build)
@@ -327,7 +327,7 @@ function New-GitHubRelease {
         }
         
         # Crear el release con el ZIP adjunto
-        $releaseTitle = "DAMTools v$Version"
+        $releaseTitle = "QuickSnap v$Version"
         $releaseNotes = @"
 ## QuickSnap v$Version
 
