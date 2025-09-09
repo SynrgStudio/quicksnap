@@ -335,7 +335,7 @@ class SnapData:
                 if self.is_origin_snapdata:
                     current_mode = quicksnap_utils.set_object_mode_if_needed()
                 if self.object_mode and not self.settings.ignore_modifiers:
-                    obj = quicksnap_utils.get_safe_evaluated_object(bpy.data.objects[object_name], depsgraph, self.settings.ignore_modifiers)
+                    obj = bpy.data.objects[object_name].evaluated_get(depsgraph)
                 else:
                     obj = bpy.data.objects[object_name]
                 self.objects_point_data[object_name] = ObjectPointData(obj,
@@ -368,7 +368,7 @@ class SnapData:
                 if self.settings.ignore_modifiers:
                     obj = bpy.data.objects[object_name]
                 else:
-                    obj = quicksnap_utils.get_safe_evaluated_object(bpy.data.objects[object_name], depsgraph, self.settings.ignore_modifiers)
+                    obj = bpy.data.objects[object_name].evaluated_get(depsgraph)
 
                 if object_name not in self.scene_meshes:
                     object_index = -1
@@ -503,17 +503,50 @@ class SnapData:
                      f"start_index={start_index} - end_index={end_index} - start_insert={start_insert} - "
                      f"end_insert={end_insert} - len world_space={len(self.world_space)} ")
 
-        # Copy points to target points arrays.
-        self.world_space[start_insert:end_insert] = points_data.world_space_co[start_index:end_index]
-        self.region_2d[start_insert:end_insert] = points_data.screen_space_co[start_index:end_index]
-        self.region_2d[start_insert:end_insert, 2] = points_data.screen_space_co[start_index:end_index, 2] * 0.00000001
-        self.depth[start_insert:end_insert] = points_data.screen_space_co[start_index:end_index, 2]
-        self.object_id[start_insert:end_insert] = np.full(insert_count, points_data.object_id, dtype=int)
-        self.indices[start_insert:end_insert] = points_data.indices[start_index:end_index]
-        if points_data.is_curve:
-            self.spline_index[start_insert:end_insert] = points_data.spline_index[start_index:end_index]
-        else:
-            self.spline_index[start_insert:end_insert] = -1
+        # Validate array shapes before copying to prevent broadcasting errors
+        try:
+            source_shape = points_data.world_space_co[start_index:end_index].shape
+            target_shape = self.world_space[start_insert:end_insert].shape
+            
+            if source_shape != target_shape:
+                logger.warning(f"QuickSnap: Shape mismatch for object '{object_name}' - "
+                             f"source: {source_shape}, target: {target_shape}. "
+                             f"Adjusting insert_count from {insert_count} to {source_shape[0]}")
+                # Adjust insert_count to match actual source data
+                actual_insert_count = source_shape[0]
+                end_insert = start_insert + actual_insert_count
+                
+                # Ensure we don't exceed our array bounds
+                if end_insert > len(self.world_space):
+                    actual_insert_count = len(self.world_space) - start_insert
+                    end_insert = start_insert + actual_insert_count
+                    end_index = start_index + actual_insert_count
+                    logger.warning(f"QuickSnap: Truncating to prevent array overflow. "
+                                 f"Final insert_count: {actual_insert_count}")
+                
+                insert_count = actual_insert_count
+
+            # Copy points to target points arrays.
+            self.world_space[start_insert:end_insert] = points_data.world_space_co[start_index:end_index]
+            self.region_2d[start_insert:end_insert] = points_data.screen_space_co[start_index:end_index]
+            self.region_2d[start_insert:end_insert, 2] = points_data.screen_space_co[start_index:end_index, 2] * 0.00000001
+            self.depth[start_insert:end_insert] = points_data.screen_space_co[start_index:end_index, 2]
+            self.object_id[start_insert:end_insert] = np.full(insert_count, points_data.object_id, dtype=int)
+            self.indices[start_insert:end_insert] = points_data.indices[start_index:end_index]
+            if points_data.is_curve:
+                self.spline_index[start_insert:end_insert] = points_data.spline_index[start_index:end_index]
+            else:
+                self.spline_index[start_insert:end_insert] = -1
+                
+        except (ValueError, IndexError) as e:
+            logger.error(f"QuickSnap: Error processing batch for object '{object_name}': {e}")
+            logger.error(f"Attempting to copy {insert_count} points from source shape "
+                        f"{points_data.world_space_co[start_index:end_index].shape} "
+                        f"to target shape {self.world_space[start_insert:end_insert].shape}")
+            # Skip this batch and mark object as processed to avoid infinite loop
+            points_data.processed_point_count = len(points_data.screen_space_co)
+            logger.warning(f"Skipping remaining points for object '{object_name}' due to shape mismatch")
+            return
 
         # Update count of processed points and check if we are done with the current object.
         self.added_points_np += insert_count
@@ -576,7 +609,11 @@ class SnapData:
         # Process scene objects
         if len(self.to_process_scene) > 0:
             for selected_object in self.meshes_selection:
-                bpy.data.objects[selected_object].hide_set(True)
+                try:
+                    bpy.data.objects[selected_object].hide_set(True)
+                except RuntimeError as e:
+                    print(f"QuickSnap: Could not hide selected object '{selected_object}': {e}")
+                    pass
             for object_name in self.to_process_scene.copy():
                 obj = bpy.data.objects[object_name]
                 if object_name not in self.objects_point_data:
@@ -600,8 +637,16 @@ class SnapData:
                         self.balance_tree(start_insert_id, self.added_points_np)
                         return True
             for selected_object in self.meshes_selection:
-                bpy.data.objects[selected_object].hide_set(False)
-                bpy.data.objects[selected_object].select_set(True)
+                try:
+                    bpy.data.objects[selected_object].hide_set(False)
+                    bpy.data.objects[selected_object].select_set(True)
+                except RuntimeError as e:
+                    print(f"QuickSnap: Could not unhide selected object '{selected_object}': {e}")
+                    # Still try to select it even if hide_set failed
+                    try:
+                        bpy.data.objects[selected_object].select_set(True)
+                    except:
+                        pass
         return False
 
     def find_closest(self, mouse_coord_screen_flat, search_origins_only=False):
@@ -738,7 +783,13 @@ class SnapData:
         for obj in self.processed:  # Hide already processed meshes
             if obj not in bpy.data.objects:
                 continue
-            bpy.data.objects[obj].hide_set(True)
+            try:
+                bpy.data.objects[obj].hide_set(True)
+            except RuntimeError as e:
+                # Handle cases where object can't be hidden (e.g., instances, different view layers)
+                print(f"QuickSnap: Could not hide object '{obj}': {e}")
+                # Continue processing without hiding - not critical for functionality
+                pass
 
 
         # Look for close objects (8 raycasts 40px around the mouse cursor)
@@ -746,7 +797,11 @@ class SnapData:
         for obj in self.processed:  # un-hiding processed objects, for obstruction check
             if obj not in bpy.data.objects:
                 continue
-            bpy.data.objects[obj].hide_set(False)
+            try:
+                bpy.data.objects[obj].hide_set(False)
+            except RuntimeError as e:
+                print(f"QuickSnap: Could not unhide processed object '{obj}': {e}")
+                pass
 
         # Add the close objects to the to-process list
         for obj in close_objects:

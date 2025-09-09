@@ -769,8 +769,28 @@ class QuickVertexSnapOperator(bpy.types.Operator):
         # Revert mode and selection
         if self.object_mode:
             if context.active_object is None:
-                context.view_layer.objects.active = context.selected_objects[0]
-            bpy.ops.object.mode_set(mode='OBJECT')
+                # Safely set active object only if there are selected objects
+                if context.selected_objects and len(context.selected_objects) > 0:
+                    context.view_layer.objects.active = context.selected_objects[0]
+                else:
+                    # If no objects are selected, try to use one from our selection_objects
+                    if hasattr(self, 'selection_objects') and self.selection_objects:
+                        try:
+                            first_obj_name = self.selection_objects[0]
+                            if first_obj_name in bpy.data.objects:
+                                context.view_layer.objects.active = bpy.data.objects[first_obj_name]
+                        except (IndexError, KeyError):
+                            # If all else fails, just continue without setting active object
+                            pass
+            
+            # Only try to set mode if we have an active object
+            if context.active_object is not None:
+                try:
+                    bpy.ops.object.mode_set(mode='OBJECT')
+                except RuntimeError as e:
+                    # Handle case where mode_set fails (e.g., no active object, object not in view layer)
+                    print(f"QuickSnap: Could not set object mode: {e}")
+                    pass
 
         if self.no_selection:
             if self.object_mode:
