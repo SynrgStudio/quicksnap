@@ -58,6 +58,27 @@ Check the [Release Page](https://github.com/SynrgStudio/quicksnap/releases) to l
     ![image](https://user-images.githubusercontent.com/35562774/196763149-11ec36c4-5b95-43fe-a3f5-1bfd68f5f3a9.png)
 
 
+## ⚠️ Blender's Native Snap Base Feature
+
+**Important Note:** Starting with Blender 4.2, a native feature called **"Snap Base"** was introduced that provides similar functionality to this addon.
+
+### Native Snap Base (Blender 4.2+):
+- **How to use**: Start a move with `G`, then press `B` to activate snap base mode
+- **Workflow**: Click a snapping point to snap FROM, then click another point to snap TO
+- **Documentation**: [Blender Manual - Snap Base](https://docs.blender.org/manual/en/latest/editors/3dview/controls/snapping.html#snap-base)
+
+### When to use QuickSnap vs Native Snap Base:
+- **Use Native Snap Base** if you need basic point-to-point snapping and prefer built-in Blender tools
+- **Use QuickSnap** if you need:
+  - Maya/3Dsmax-style workflow and muscle memory
+  - Advanced features like snap type switching, visual feedback
+  - Duplicate functionality while snapping
+  - Customizable hotkeys and extensive configuration options
+  - Two-click workflow and camera movement between clicks
+
+Both tools can coexist - choose the one that best fits your workflow!
+
+
 ## Installation
 1. Click on the green button Code > Download Zip to download the addon on your computer
 
