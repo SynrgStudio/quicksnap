@@ -498,6 +498,15 @@ class QuickVertexSnapOperator(bpy.types.Operator):
 
         self.handle_hotkeys(context, event, region)
 
+        # Edge Cases: RMB Camera Rotation - Check before cancel handling
+        preferences = get_addon_settings()
+        if (preferences.enable_rmb_camera_rotation and 
+            event.type == 'RIGHTMOUSE' and 
+            event.value == 'PRESS' and 
+            not self.menu_open):
+            # Let Blender handle RMB camera rotation, don't cancel snapping
+            return {'PASS_THROUGH'}
+
         if event.type in {'RIGHTMOUSE', 'ESC'} and not self.menu_open and event.value == 'PRESS':  # Cancel
             self.terminate(context, revert=True)
             return {'CANCELLED'}
@@ -1037,6 +1046,12 @@ class QuickVertexSnapPreference(bpy.types.AddonPreferences):
         ],
         default='ALT',
     )
+    
+    enable_rmb_camera_rotation: bpy.props.BoolProperty(
+        name="Allow RMB Camera Rotation During Modal",
+        description="Enable camera rotation using Right Mouse Button while QuickSnap modal is active",
+        default=False,
+    )
 
     # addon updater preferences from `__init__`, be sure to copy all of them
     auto_check_update: bpy.props.BoolProperty(
@@ -1159,6 +1174,14 @@ class QuickVertexSnapPreference(bpy.types.AddonPreferences):
             col.label(text="⚠️ This only works if you have the chosen", icon='INFO')
             col.label(text="modifier + LMB configured for camera navigation", icon='BLANK1')
             col.label(text="in your Blender keymap preferences.", icon='BLANK1')
+
+        # RMB Camera Rotation Toggle
+        col.separator()
+        col.prop(self, "enable_rmb_camera_rotation")
+        if self.enable_rmb_camera_rotation:
+            col.separator()
+            col.label(text="⚠️ This only works if you have RMB configured", icon='INFO')
+            col.label(text="for camera rotation in your Blender keymap.", icon='BLANK1')
 
         addon_updater_ops.update_settings_ui(self, context)
 
