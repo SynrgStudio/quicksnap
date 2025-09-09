@@ -502,7 +502,7 @@ class QuickVertexSnapOperator(bpy.types.Operator):
             self.terminate(context, revert=True)
             return {'CANCELLED'}
 
-        # Edge Cases: Custom Camera Navigation
+        # Edge Cases: Custom Camera Navigation - Check for modifier + LMB first
         preferences = get_addon_settings()
         if (preferences.enable_camera_navigation and 
             event.type == 'LEFTMOUSE' and 
@@ -521,7 +521,8 @@ class QuickVertexSnapOperator(bpy.types.Operator):
                 # Let Blender handle the navigation, don't process snapping
                 return {'PASS_THROUGH'}
 
-        elif event.type == 'LEFTMOUSE' and not self.menu_open:  # Confirm
+        # Normal LEFTMOUSE handling (independent of Edge Cases)
+        if event.type == 'LEFTMOUSE' and not self.menu_open:  # Confirm
             if event.value == 'PRESS':
                 self.clicktime = time.time()
             elif self.last_event == event.type or time.time()-self.clicktime <= 0.10:
