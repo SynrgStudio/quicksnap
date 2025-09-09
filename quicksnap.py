@@ -581,7 +581,7 @@ class QuickVertexSnapOperator(bpy.types.Operator):
             self.menu_open = True
             logger.info(f"Pie menu called.")
             bpy.ops.wm.call_menu_pie(name="VIEW3D_MT_PIE_quicksnap")
-        elif event_type == 'ONE' or event_type == 'NUMPAD_1':
+        elif event_type == 'ONE' or event_type == 'NUMPAD_1' or event_type == 'V':
             self.icon_display_time = time.time()
             if self.current_state == State.IDLE:
                 if self.settings.snap_source_type != 'POINTS':
@@ -591,7 +591,7 @@ class QuickVertexSnapOperator(bpy.types.Operator):
                 if self.settings.snap_target_type != 'POINTS':
                     self.settings.snap_target_type = 'POINTS'
                     self.handle_pie_menu_closed(context, event, region)
-        elif event_type == 'TWO' or event_type == 'NUMPAD_2':
+        elif event_type == 'TWO' or event_type == 'NUMPAD_2' or event_type == 'E':
             self.icon_display_time = time.time()
             if self.current_state == State.IDLE:
                 if self.settings.snap_source_type != 'MIDPOINTS':
@@ -601,7 +601,7 @@ class QuickVertexSnapOperator(bpy.types.Operator):
                 if self.settings.snap_target_type != 'MIDPOINTS':
                     self.settings.snap_target_type = 'MIDPOINTS'
                     self.handle_pie_menu_closed(context, event, region)
-        elif event_type == 'THREE' or event_type == 'NUMPAD_3':
+        elif event_type == 'THREE' or event_type == 'NUMPAD_3' or event_type == 'F':
             self.icon_display_time = time.time()
             if self.current_state == State.IDLE:
                 if self.settings.snap_source_type != 'FACES':
@@ -1076,9 +1076,9 @@ class QuickVertexSnapPreference(bpy.types.AddonPreferences):
         quicksnap_utils.insert_ui_hotkey(col, 'EVENT_Y', "Constraint to Y Plane", shift=True)
         quicksnap_utils.insert_ui_hotkey(col, 'EVENT_Z', "Constraint to Z Axis")
         quicksnap_utils.insert_ui_hotkey(col, 'EVENT_Z', "Constraint to Z Plane", shift=True)
-        quicksnap_utils.insert_ui_hotkey(col, 'EVENT_1', "Snap from/to vertices and curve points")
-        quicksnap_utils.insert_ui_hotkey(col, 'EVENT_2', "Snap from/to edge mid-points")
-        quicksnap_utils.insert_ui_hotkey(col, 'EVENT_3', "Snap from/to face centers")
+        quicksnap_utils.insert_ui_hotkey(col, 'EVENT_1', "Snap from/to vertices and curve points (1 or V)")
+        quicksnap_utils.insert_ui_hotkey(col, 'EVENT_2', "Snap from/to edge mid-points (2 or E)")
+        quicksnap_utils.insert_ui_hotkey(col, 'EVENT_3', "Snap from/to face centers (3 or F)")
         quicksnap_utils.insert_ui_hotkey(col, 'EVENT_O', "Snap from/to object origins")
         quicksnap_utils.insert_ui_hotkey(col, 'EVENT_W', "Enable/Disable wireframe on target object")
         quicksnap_utils.insert_ui_hotkey(col, 'EVENT_M', "Enable/Disable 'Ignore Modifiers'")

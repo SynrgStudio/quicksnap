@@ -20,7 +20,7 @@ Check the [Release Page](https://github.com/SynrgStudio/quicksnap/releases) to l
   
 
     
-* New: You can change the snap target type using hotkeys: 1: Vertices/curve points, 2:Edge centers, 3:Face centers, O: Origins
+* New: You can change the snap target type using hotkeys: 1 or V: Vertices/curve points, 2 or E: Edge centers, 3 or F: Face centers, O: Origins
 * New: An icon close to the mouse let you know the current snap target type. (You can have it always visible, fade after a few seconds, or completely disabled)
 
     ![hotkey-icon](https://user-images.githubusercontent.com/35562774/199265091-24b63cdf-780b-4aa1-847c-cfb486469356.gif)
@@ -78,7 +78,7 @@ Check the [Release Page](https://github.com/SynrgStudio/quicksnap/releases) to l
 * Select the object or the vertices/edges/faces/curve points you want to move
 * Enable the tool using the hotkey (Ctrl+Shift+V by default)
 * Select the type of point you want to snap from/to, by either:
-  * Usin a hotkey:  1: Vertices/curve points, 2:Edge centers, 3:Face centers, O: Origins
+  * Usin a hotkey:  1 or V: Vertices/curve points, 2 or E: Edge centers, 3 or F: Face centers, O: Origins
   * Opening the pie menu (by using the same hotkey as the one to enable the tool (Ctrl+Shift+V by default)) and chose what you snap from/to (Vertices and curve points / edge midpoints / face centers)
 
 * To snap you have two options:

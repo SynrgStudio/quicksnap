@@ -335,7 +335,7 @@ class SnapData:
                 if self.is_origin_snapdata:
                     current_mode = quicksnap_utils.set_object_mode_if_needed()
                 if self.object_mode and not self.settings.ignore_modifiers:
-                    obj = bpy.data.objects[object_name].evaluated_get(depsgraph)
+                    obj = quicksnap_utils.get_safe_evaluated_object(bpy.data.objects[object_name], depsgraph, self.settings.ignore_modifiers)
                 else:
                     obj = bpy.data.objects[object_name]
                 self.objects_point_data[object_name] = ObjectPointData(obj,
@@ -368,7 +368,7 @@ class SnapData:
                 if self.settings.ignore_modifiers:
                     obj = bpy.data.objects[object_name]
                 else:
-                    obj = bpy.data.objects[object_name].evaluated_get(depsgraph)
+                    obj = quicksnap_utils.get_safe_evaluated_object(bpy.data.objects[object_name], depsgraph, self.settings.ignore_modifiers)
 
                 if object_name not in self.scene_meshes:
                     object_index = -1

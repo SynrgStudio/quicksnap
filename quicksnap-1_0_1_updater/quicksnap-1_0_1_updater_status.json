@@ -1,16 +1,9 @@
 {
     "last_check": "2025-09-03 15:42:27.212743",
     "backup_date": "",
-    "update_ready": true,
+    "update_ready": false,
     "ignore": false,
     "just_restored": false,
     "just_updated": false,
-    "version_text": {
-        "link": "https://api.github.com/repos/SynrgStudio/quicksnap/zipball/1_0_1",
-        "version": [
-            1,
-            0,
-            1
-        ]
-    }
+    "version_text": {}
 }
