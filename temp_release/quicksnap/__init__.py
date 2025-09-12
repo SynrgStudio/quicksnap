@@ -7,7 +7,7 @@ bl_info = {
     "name": "QuickSnap",
     "author": "SynrgStudio",
     "blender": (4, 5, 3),
-    "version": (1, 1, 9),
+    "version": (1, 2, 0),
     "category": "3D View",
     "description": "Quickly snap objects/vertices/curve points - Duplicate objects and snap",
     "warning": "",

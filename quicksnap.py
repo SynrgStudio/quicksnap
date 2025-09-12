@@ -376,7 +376,27 @@ class QuickVertexSnapOperator(bpy.types.Operator):
                                                                   bpy.data.objects[self.selection_objects[0]],
                                                                   is_ortho=is_ortho)
 
+            # Apply Grid Snap if enabled
+            grid_plane = None
+            if self.settings.enable_grid_snap and self.grid_snap_enabled and self.target is not None:
+                self.target, grid_plane = self.apply_grid_snap(context, origin, self.target)
+
             self.last_translation = (Vector(self.target) - Vector(origin))
+            
+            # If Grid Snap is enabled, restrict translation to the detected plane
+            if self.settings.enable_grid_snap and self.grid_snap_enabled and self.target is not None and grid_plane is not None:
+                original_translation = self.last_translation.copy()
+                if grid_plane == 'XY':
+                    # Only allow movement in X and Y, keep Z from origin
+                    self.last_translation.z = 0
+                elif grid_plane == 'XZ':
+                    # Only allow movement in X and Z, keep Y from origin
+                    self.last_translation.y = 0
+                elif grid_plane == 'YZ':
+                    # Only allow movement in Y and Z, keep X from origin
+                    self.last_translation.x = 0
+                logger.debug(f"Grid Snap plane restriction: {grid_plane}, Original translation={original_translation}, Restricted translation={self.last_translation}")
+            
             tool_settings = context.tool_settings
             use_auto_merge = use_auto_merge and not self.object_mode and tool_settings.use_mesh_automerge
             bpy.ops.transform.translate(value=self.last_translation,
@@ -387,6 +407,75 @@ class QuickVertexSnapOperator(bpy.types.Operator):
             # Get the 2D position of the target for ui rendering
             self.target2d = quicksnap_utils.transform_worldspace_coord2d(self.target, region,
                                                                          context.space_data.region_3d)
+
+    def apply_grid_snap(self, context, origin, target):
+        """
+        Apply grid snapping to the target point based on camera orientation.
+        Returns the snapped target point and the detected plane.
+        """
+        if not self.settings.enable_grid_snap or not self.grid_snap_enabled:
+            return target, None
+
+        try:
+            # Get the view matrix to determine camera orientation
+            region3d = context.space_data.region_3d
+            view_matrix = region3d.view_matrix
+            
+            # Get camera forward direction (Z-axis of view matrix)
+            camera_forward = Vector((view_matrix[0][2], view_matrix[1][2], view_matrix[2][2]))
+            
+            # Determine the dominant plane based on camera orientation
+            abs_x = abs(camera_forward.x)
+            abs_y = abs(camera_forward.y)
+            abs_z = abs(camera_forward.z)
+            
+            # Find which axis the camera is looking along most
+            # If camera is looking along X, snap to YZ plane (perpendicular to X)
+            # If camera is looking along Y, snap to XZ plane (perpendicular to Y)
+            # If camera is looking along Z, snap to XY plane (perpendicular to Z)
+            logger.debug(f"Camera forward: X={camera_forward.x:.3f}, Y={camera_forward.y:.3f}, Z={camera_forward.z:.3f}")
+            if abs_x >= abs_y and abs_x >= abs_z:
+                # Camera looking mostly along X, snap to YZ plane
+                plane = 'YZ'
+                fixed_axis = 0  # X axis
+            elif abs_y >= abs_x and abs_y >= abs_z:
+                # Camera looking mostly along Y, snap to XZ plane
+                plane = 'XZ'
+                fixed_axis = 1  # Y axis
+            else:
+                # Camera looking mostly along Z, snap to XY plane
+                plane = 'XY'
+                fixed_axis = 2  # Z axis
+            
+            # Get grid scale from scene
+            grid_scale = context.space_data.overlay.grid_scale
+            grid_subdivisions = context.space_data.overlay.grid_subdivisions
+            
+            # Calculate grid spacing
+            grid_spacing = grid_scale / grid_subdivisions
+            
+            # Snap the target point to the grid on the determined plane
+            snapped_target = Vector(target)
+            
+            if plane == 'XY':
+                # Snap X and Y, keep Z
+                snapped_target.x = round(target.x / grid_spacing) * grid_spacing
+                snapped_target.y = round(target.y / grid_spacing) * grid_spacing
+            elif plane == 'XZ':
+                # Snap X and Z, keep Y
+                snapped_target.x = round(target.x / grid_spacing) * grid_spacing
+                snapped_target.z = round(target.z / grid_spacing) * grid_spacing
+            else:  # YZ
+                # Snap Y and Z, keep X
+                snapped_target.y = round(target.y / grid_spacing) * grid_spacing
+                snapped_target.z = round(target.z / grid_spacing) * grid_spacing
+            
+            logger.debug(f"Grid Snap: Plane={plane}, Original={target}, Snapped={snapped_target}")
+            return snapped_target, plane
+            
+        except Exception as e:
+            logger.warning(f"Grid Snap failed: {e}")
+            return target, None
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -454,6 +543,7 @@ class QuickVertexSnapOperator(bpy.types.Operator):
         self.settings = get_addon_settings()
         self.snapping_local = False
         self.snapping = ""
+        self.grid_snap_enabled = False
 
     def __del__(self):
         pass
@@ -650,6 +740,16 @@ class QuickVertexSnapOperator(bpy.types.Operator):
                 if self.settings.snap_target_type != 'ORIGINS':
                     self.settings.snap_target_type = 'ORIGINS'
                     self.handle_pie_menu_closed(context, event, region)
+
+        elif event_type == 'FOUR' or event_type == 'NUMPAD_4':
+            logger.debug(f"Grid Snap hotkey pressed. enable_grid_snap: {self.settings.enable_grid_snap}")
+            if self.settings.enable_grid_snap:
+                self.grid_snap_enabled = not self.grid_snap_enabled
+                self.update(context, region)
+                self.apply(context, region)
+                logger.info(f"Grid Snap {'enabled' if self.grid_snap_enabled else 'disabled'}")
+            else:
+                logger.info("Grid Snap hotkey pressed but Grid Snap is disabled in preferences. Enable it in addon settings first.")
 
         elif event_type == 'X':
             if event.shift:
@@ -851,9 +951,20 @@ class QuickVertexSnapOperator(bpy.types.Operator):
     def update_header(self, context):
         ignore_modifiers_msg = ""
         axis_msg = ""
+        grid_snap_msg = ""
         snapping_msg = f"Use (Shift+)X/Y/Z to constraint to the world/local axis or plane. Use O to snap to object " \
-                       f"origins. 1,2,3 to snap to verts, edge midpoints, face centers. Right Mouse Button/ESC to cancel the operation. " \
+                       f"origins. 1,2,3 to snap to verts, edge midpoints, face centers. "
+        
+        if self.settings.enable_grid_snap:
+            snapping_msg += "4 to toggle Grid Snap. "
+        else:
+            snapping_msg += "4 (Grid Snap disabled in preferences). "
+            
+        snapping_msg += "Right Mouse Button/ESC to cancel the operation. " \
                        f"Use 'D' to duplicate selected objects"
+
+        if self.settings.enable_grid_snap and self.grid_snap_enabled:
+            grid_snap_msg = " [GRID SNAP ENABLED]"
 
         if len(self.snapping) > 0:
             if len(self.snapping) == 1:
@@ -868,11 +979,11 @@ class QuickVertexSnapOperator(bpy.types.Operator):
             ignore_modifiers_msg = " [MODIFIERS ARE IGNORED]"
         if self.current_state == State.IDLE:
             context.area.header_text_set(f"QuickSnap: Pick the source vertex/point. {snapping_msg}{axis_msg} "
-                                         f"{ignore_modifiers_msg}")
+                                         f"{ignore_modifiers_msg}{grid_snap_msg}")
         elif self.current_state == State.SOURCE_PICKED:
             context.area.header_text_set(
                 f"QuickSnap: Move the mouse over the target vertex/point. {snapping_msg}{axis_msg} "
-                f"{ignore_modifiers_msg}")
+                f"{ignore_modifiers_msg}{grid_snap_msg}")
 
     def invoke(self, context, event):
         if context.area is None:
@@ -1052,6 +1163,13 @@ class QuickVertexSnapPreference(bpy.types.AddonPreferences):
         description="Enable camera rotation using Right Mouse Button while QuickSnap modal is active",
         default=False,
     )
+    
+    # Grid Snap Feature
+    enable_grid_snap: bpy.props.BoolProperty(
+        name="Enable Grid Snap",
+        description="Enable snapping to Blender's grid system with visual feedback",
+        default=False,
+    )
 
     # addon updater preferences from `__init__`, be sure to copy all of them
     auto_check_update: bpy.props.BoolProperty(
@@ -1152,6 +1270,7 @@ class QuickVertexSnapPreference(bpy.types.AddonPreferences):
         quicksnap_utils.insert_ui_hotkey(col, 'EVENT_1', "Snap from/to vertices and curve points (1 or V)")
         quicksnap_utils.insert_ui_hotkey(col, 'EVENT_2', "Snap from/to edge mid-points (2 or E)")
         quicksnap_utils.insert_ui_hotkey(col, 'EVENT_3', "Snap from/to face centers (3 or F)")
+        quicksnap_utils.insert_ui_hotkey(col, 'EVENT_4', "Enable/Disable Grid Snap (4 or NUMPAD_4)")
         quicksnap_utils.insert_ui_hotkey(col, 'EVENT_O', "Snap from/to object origins")
         quicksnap_utils.insert_ui_hotkey(col, 'EVENT_W', "Enable/Disable wireframe on target object")
         quicksnap_utils.insert_ui_hotkey(col, 'EVENT_M', "Enable/Disable 'Ignore Modifiers'")
@@ -1182,6 +1301,15 @@ class QuickVertexSnapPreference(bpy.types.AddonPreferences):
             col.separator()
             col.label(text="⚠️ This only works if you have RMB configured", icon='INFO')
             col.label(text="for camera rotation in your Blender keymap.", icon='BLANK1')
+
+        # Grid Snap Toggle
+        col.separator()
+        col.prop(self, "enable_grid_snap")
+        if self.enable_grid_snap:
+            col.separator()
+            col.label(text="Press 4 or NUMPAD_4 during QuickSnap to", icon='INFO')
+            col.label(text="enable/disable grid snapping. The grid plane", icon='BLANK1')
+            col.label(text="is automatically detected based on camera view.", icon='BLANK1')
 
         addon_updater_ops.update_settings_ui(self, context)
 

@@ -320,6 +320,109 @@ def draw_callback_2d(self, context):
         draw_square_2d(self.mouse_position[0], self.mouse_position[1], square_width, color=(1, 1, 1, 0.3), point_width=0)
 
 
+def draw_grid_feedback(self, context):
+    """
+    Draw grid feedback lines when Grid Snap is enabled.
+    Shows axis-colored lines with decreasing opacity around the snap point.
+    """
+    if not (self.settings.enable_grid_snap and self.grid_snap_enabled and self.target is not None):
+        return
+    
+    try:
+        # Get the view matrix to determine camera orientation
+        region3d = context.space_data.region_3d
+        view_matrix = region3d.view_matrix
+        
+        # Get camera forward direction (Z-axis of view matrix)
+        camera_forward = Vector((view_matrix[0][2], view_matrix[1][2], view_matrix[2][2]))
+        
+        # Determine the dominant plane based on camera orientation
+        abs_x = abs(camera_forward.x)
+        abs_y = abs(camera_forward.y)
+        abs_z = abs(camera_forward.z)
+        
+        # Find which axis is most perpendicular to camera view
+        if abs_z >= abs_x and abs_z >= abs_y:
+            # Camera looking mostly along Z, snap to XY plane
+            plane = 'XY'
+            grid_lines = [
+                # X lines (red)
+                ('X', [(self.target.x - 5, self.target.y, self.target.z), (self.target.x + 5, self.target.y, self.target.z)]),
+                ('X', [(self.target.x - 4, self.target.y, self.target.z), (self.target.x + 4, self.target.y, self.target.z)]),
+                ('X', [(self.target.x - 3, self.target.y, self.target.z), (self.target.x + 3, self.target.y, self.target.z)]),
+                ('X', [(self.target.x - 2, self.target.y, self.target.z), (self.target.x + 2, self.target.y, self.target.z)]),
+                ('X', [(self.target.x - 1, self.target.y, self.target.z), (self.target.x + 1, self.target.y, self.target.z)]),
+                # Y lines (green)
+                ('Y', [(self.target.x, self.target.y - 5, self.target.z), (self.target.x, self.target.y + 5, self.target.z)]),
+                ('Y', [(self.target.x, self.target.y - 4, self.target.z), (self.target.x, self.target.y + 4, self.target.z)]),
+                ('Y', [(self.target.x, self.target.y - 3, self.target.z), (self.target.x, self.target.y + 3, self.target.z)]),
+                ('Y', [(self.target.x, self.target.y - 2, self.target.z), (self.target.x, self.target.y + 2, self.target.z)]),
+                ('Y', [(self.target.x, self.target.y - 1, self.target.z), (self.target.x, self.target.y + 1, self.target.z)]),
+            ]
+        elif abs_y >= abs_x and abs_y >= abs_z:
+            # Camera looking mostly along Y, snap to XZ plane
+            plane = 'XZ'
+            grid_lines = [
+                # X lines (red)
+                ('X', [(self.target.x - 5, self.target.y, self.target.z), (self.target.x + 5, self.target.y, self.target.z)]),
+                ('X', [(self.target.x - 4, self.target.y, self.target.z), (self.target.x + 4, self.target.y, self.target.z)]),
+                ('X', [(self.target.x - 3, self.target.y, self.target.z), (self.target.x + 3, self.target.y, self.target.z)]),
+                ('X', [(self.target.x - 2, self.target.y, self.target.z), (self.target.x + 2, self.target.y, self.target.z)]),
+                ('X', [(self.target.x - 1, self.target.y, self.target.z), (self.target.x + 1, self.target.y, self.target.z)]),
+                # Z lines (blue)
+                ('Z', [(self.target.x, self.target.y, self.target.z - 5), (self.target.x, self.target.y, self.target.z + 5)]),
+                ('Z', [(self.target.x, self.target.y, self.target.z - 4), (self.target.x, self.target.y, self.target.z + 4)]),
+                ('Z', [(self.target.x, self.target.y, self.target.z - 3), (self.target.x, self.target.y, self.target.z + 3)]),
+                ('Z', [(self.target.x, self.target.y, self.target.z - 2), (self.target.x, self.target.y, self.target.z + 2)]),
+                ('Z', [(self.target.x, self.target.y, self.target.z - 1), (self.target.x, self.target.y, self.target.z + 1)]),
+            ]
+        else:
+            # Camera looking mostly along X, snap to YZ plane
+            plane = 'YZ'
+            grid_lines = [
+                # Y lines (green)
+                ('Y', [(self.target.x, self.target.y - 5, self.target.z), (self.target.x, self.target.y + 5, self.target.z)]),
+                ('Y', [(self.target.x, self.target.y - 4, self.target.z), (self.target.x, self.target.y + 4, self.target.z)]),
+                ('Y', [(self.target.x, self.target.y - 3, self.target.z), (self.target.x, self.target.y + 3, self.target.z)]),
+                ('Y', [(self.target.x, self.target.y - 2, self.target.z), (self.target.x, self.target.y + 2, self.target.z)]),
+                ('Y', [(self.target.x, self.target.y - 1, self.target.z), (self.target.x, self.target.y + 1, self.target.z)]),
+                # Z lines (blue)
+                ('Z', [(self.target.x, self.target.y, self.target.z - 5), (self.target.x, self.target.y, self.target.z + 5)]),
+                ('Z', [(self.target.x, self.target.y, self.target.z - 4), (self.target.x, self.target.y, self.target.z + 4)]),
+                ('Z', [(self.target.x, self.target.y, self.target.z - 3), (self.target.x, self.target.y, self.target.z + 3)]),
+                ('Z', [(self.target.x, self.target.y, self.target.z - 2), (self.target.x, self.target.y, self.target.z + 2)]),
+                ('Z', [(self.target.x, self.target.y, self.target.z - 1), (self.target.x, self.target.y, self.target.z + 1)]),
+            ]
+        
+        # Draw grid lines with decreasing opacity
+        for axis, (start, end) in grid_lines:
+            # Calculate opacity based on distance from center (5 units = lowest opacity, 1 unit = highest opacity)
+            distance = abs(start[0] - self.target.x) + abs(start[1] - self.target.y) + abs(start[2] - self.target.z)
+            if distance <= 1:
+                opacity = 0.95  # Increased from 0.8
+            elif distance <= 2:
+                opacity = 0.85  # Increased from 0.6
+            elif distance <= 3:
+                opacity = 0.7   # Increased from 0.4
+            elif distance <= 4:
+                opacity = 0.5   # Increased from 0.2
+            else:
+                opacity = 0.3   # Increased from 0.1
+            
+            # Set color based on axis
+            if axis == 'X':
+                color = (1.0, 0.2, 0.2, opacity)  # Red
+            elif axis == 'Y':
+                color = (0.2, 1.0, 0.2, opacity)  # Green
+            else:  # Z
+                color = (0.2, 0.2, 1.0, opacity)  # Blue
+            
+            draw_line_3d(Vector(start), Vector(end), color=color, line_width=1, depth_test=True)
+            
+    except Exception as e:
+        logger.warning(f"Grid feedback drawing failed: {e}")
+
+
 def draw_snap_axis(self, context):
     """
     Draw axis lines depending on QuickSNap operator snapping settings.
@@ -406,6 +509,8 @@ def draw_callback_3d(self, context):
     """
         Draw all 3D ui for QuickSnap: Snap axis, edge/points highlight.
     """
+    draw_snap_axis(self, context)
+    draw_grid_feedback(self, context)
     draw_snap_axis(self, context)
     if self.current_state == State.IDLE and not (self.object_mode and self.no_selection):
         coords = [self.snapdata_source.world_space[objectid] for objectid in self.snapdata_source.origins_map]

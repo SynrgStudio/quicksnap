@@ -11,14 +11,12 @@ Now it has Duplicate Capabilities
 Check the [Release Page](https://github.com/SynrgStudio/quicksnap/releases) to learn about the latest updates.
 
 ## Features:
-* Snap From/To:
-  * Scene cursor
-  * Object origins
-  * Vertices and Curve points
-  * Edges mid-points
-  * Face centers
-  
+* New: Grid Snap feature with visual feedback - Press 4 or NUMPAD_4 to enable/disable grid snapping to Blender's grid system
+* New: Automatic grid plane detection based on camera orientation (XY/XZ/YZ planes)
+* New: Visual feedback with axis-colored grid lines (Red=X, Green=Y, Blue=Z) with decreasing opacity
+* New: Duplicate objects while snapping - Press 'D' during the snap operation to duplicate selected objects
 
+    ![grid-snap-demo](https://user-images.githubusercontent.com/35562774/199265091-24b63cdf-780b-4aa1-847c-cfb486469356.gif)
     
 * New: You can change the snap target type using hotkeys: 1 or V: Vertices/curve points, 2 or E: Edge centers, 3 or F: Face centers, O: Origins
 * New: An icon close to the mouse let you know the current snap target type. (You can have it always visible, fade after a few seconds, or completely disabled)
@@ -42,6 +40,29 @@ Check the [Release Page](https://github.com/SynrgStudio/quicksnap/releases) to l
 * A pie menu allows you to change the type of point you snap from/to. Use the same hotkey as the one you use ot open the tool to display the menu.
 
     ![pie-menu](https://user-images.githubusercontent.com/35562774/196196537-82078f77-70ab-4929-a36a-6aaf6fe3bfde.gif)
+
+## Grid Snap Feature
+
+QuickSnap now includes an advanced Grid Snap feature that provides visual feedback when snapping to Blender's grid system:
+
+### How to use Grid Snap:
+1. Enable Grid Snap in the addon preferences (Edge Cases section)
+2. During a snap operation, press `4` or `NUMPAD_4` to toggle Grid Snap on/off
+3. The grid plane is automatically detected based on your camera orientation:
+   - **XY Plane**: When camera is looking along Z-axis (top/front/back views)
+   - **XZ Plane**: When camera is looking along Y-axis (side views)
+   - **YZ Plane**: When camera is looking along X-axis (side views)
+
+### Visual Feedback:
+- **Axis-colored lines**: Red for X-axis, Green for Y-axis, Blue for Z-axis
+- **Decreasing opacity**: Lines closer to the snap point are more opaque, creating a visual focus
+- **Grid extent**: Shows grid lines up to 5 units from the snap point in each direction
+
+### Benefits:
+- **Precise alignment**: Snap objects/vertices to exact grid intersections
+- **Visual guidance**: See exactly where your snap point will land on the grid
+- **Context awareness**: Grid plane automatically adapts to your viewing angle
+- **Non-intrusive**: Only visible when Grid Snap is active
 
 * With the option 'Use vertices Auto-Merge in Edit mode' enabled, vertices will merge automatically with vertices at the same location after a snap.
 
@@ -99,7 +120,7 @@ Both tools can coexist - choose the one that best fits your workflow!
 * Select the object or the vertices/edges/faces/curve points you want to move
 * Enable the tool using the hotkey (Ctrl+Shift+V by default)
 * Select the type of point you want to snap from/to, by either:
-  * Usin a hotkey:  1 or V: Vertices/curve points, 2 or E: Edge centers, 3 or F: Face centers, O: Origins
+  * Usin a hotkey:  1 or V: Vertices/curve points, 2 or E: Edge centers, 3 or F: Face centers, 4: Grid Snap, O: Origins
   * Opening the pie menu (by using the same hotkey as the one to enable the tool (Ctrl+Shift+V by default)) and chose what you snap from/to (Vertices and curve points / edge midpoints / face centers)
 
 * To snap you have two options:
